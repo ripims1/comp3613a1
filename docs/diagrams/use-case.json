@@ -1,0 +1,39 @@
+{
+  "system": "MyAdvisor",
+  "actors": [
+    {
+      "name": "Student",
+      "side": "left"
+    },
+    {
+      "name": "Advisor",
+      "side": "right"
+    }
+  ],
+  "use_cases": [
+    {
+      "name": "Check Degree Progress",
+      "actors": [
+        "Student"
+      ]
+    },
+    {
+      "name": "Plan Course Selection",
+      "actors": [
+        "Student"
+      ]
+    },
+    {
+      "name": "Submit Course Selection for Approval",
+      "actors": [
+        "Student"
+      ]
+    },
+    {
+      "name": "Review Course Selection",
+      "actors": [
+        "Advisor"
+      ]
+    }
+  ]
+}

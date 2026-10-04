@@ -12,10 +12,7 @@ async def admin_home_view(
     user: AdminDep,
     db:SessionDep
 ):
-    return templates.TemplateResponse(
-        request=request, 
-        name="admin.html",
-        context={
-            "user": user
-        }
+    return RedirectResponse(
+        url=request.url_for("advisor_home_view"),
+        status_code=status.HTTP_303_SEE_OTHER,
     )

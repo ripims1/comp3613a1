@@ -1,0 +1,72 @@
+{% extends "advisor-base.html" %}
+{% block title %}Advisor Review History{% endblock %}
+
+{% block advisor_content %}
+<div class="container-fluid py-2">
+  <div class="mb-4">
+    <p class="text-uppercase small fw-semibold mb-1" style="color: var(--brand-muted);">Advisor workflow</p>
+    <h1 class="h3 mb-1">Review history</h1>
+    <p class="mb-0" style="color: var(--brand-muted);">
+      View plans that have already been approved or rejected.
+    </p>
+  </div>
+  <form class="mb-4" method="get" action="{{ url_for('advisor_history_view') }}">
+    <label class="visually-hidden" for="advisor-history-search">Search review history</label>
+    <div class="input-group">
+      <input class="form-control" id="advisor-history-search" name="search" value="{{ search }}"
+             type="search" placeholder="Search by student, semester, year, or course">
+      <button class="btn btn-outline-secondary" type="submit">Search</button>
+    </div>
+  </form>
+
+  {% if history %}
+  <div class="row g-4">
+    {% for review in history %}
+    <div class="col-xl-6">
+      <div class="card shadow-sm h-100"
+           style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <h2 class="h5 mb-1">{{ review.student.student_name }}</h2>
+              <p class="mb-0" style="color: var(--brand-muted);">
+                {{ review.selection.semester }} · {{ review.selection.academic_year }}
+              </p>
+            </div>
+            {% if review.selection.status == "approved" %}
+            <span class="badge rounded-pill bg-success">Approved</span>
+            {% else %}
+            <span class="badge rounded-pill bg-danger">Rejected</span>
+            {% endif %}
+          </div>
+          <div class="d-flex justify-content-between border-top pt-3">
+            <span>{{ review.course_count }} courses</span>
+            <strong class="{% if review.credit_limit_exceeded %}text-danger{% endif %}">
+              {{ review.total_credits }}/15 credits
+            </strong>
+          </div>
+          {% if review.selection.advisor_comment %}
+          <div class="alert alert-danger mt-3 mb-0">
+            <strong>Comment:</strong> {{ review.selection.advisor_comment }}
+          </div>
+          {% endif %}
+          <a class="btn btn-outline-secondary btn-sm mt-3"
+             href="{{ url_for('advisor_selection_view', selection_id=review.selection.selection_id) }}">
+            View details
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card shadow-sm" style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+    <div class="card-body">
+      <p class="mb-0" style="color: var(--brand-muted);">
+        {% if search %}No reviewed plans match your search.{% else %}No plans have been reviewed yet.{% endif %}
+      </p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

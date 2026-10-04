@@ -1,0 +1,126 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Review Course Selection{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <div class="mb-4">
+    <p class="text-uppercase small fw-semibold mb-1" style="color: var(--brand-muted);">Review and submit</p>
+    <h1 class="h3 mb-1">Review your semester plan</h1>
+    <p class="mb-0" style="color: var(--brand-muted);">
+      Check your selection before sending it to your advisor for approval.
+    </p>
+  </div>
+
+  <div class="card shadow-sm mb-4"
+       style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <span class="d-block small" style="color: var(--brand-muted);">Semester</span>
+          <strong>{{ planning.semester }}</strong>
+        </div>
+        <div class="col-md-6">
+          <span class="d-block small" style="color: var(--brand-muted);">Academic year</span>
+          <strong>{{ planning.academic_year }}</strong>
+        </div>
+        <div class="col-md-6">
+          <span class="d-block small" style="color: var(--brand-muted);">Submission status</span>
+          {% if planning.selection_status == "submitted" %}
+          <span class="badge rounded-pill" style="background: var(--brand-accent-2); color: var(--brand-surface);">Submitted for advisor review</span>
+          {% elif planning.selection_status == "draft" %}
+          <span class="badge rounded-pill" style="background: var(--brand-accent); color: var(--brand-ink);">Draft</span>
+          {% elif planning.selection_status == "approved" %}
+          <span class="badge rounded-pill bg-success">Approved</span>
+          {% elif planning.selection_status == "rejected" %}
+          <span class="badge rounded-pill bg-danger">Rejected</span>
+          {% else %}
+          <span class="badge rounded-pill text-bg-light">Not started</span>
+          {% endif %}
+        </div>
+        {% if planning.submission_details %}
+        <div class="col-md-6">
+          <span class="d-block small" style="color: var(--brand-muted);">Plan details</span>
+          <span>{{ planning.selected_courses|length }} courses · {{ planning.total_credits }}/15 credits</span>
+        </div>
+        {% endif %}
+        {% if planning.submission_details.advisor_comment %}
+        <div class="col-12">
+          <div class="alert alert-danger mb-0">
+            <strong>Advisor comment:</strong> {{ planning.submission_details.advisor_comment }}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm"
+       style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+    <div class="card-body">
+      <h2 class="h5 mb-3">Selected courses</h2>
+      {% if planning.selected_courses %}
+      <div class="list-group list-group-flush">
+        {% for course, requirement in planning.selected_course_details %}
+        <div class="list-group-item px-0 d-flex justify-content-between"
+             style="background: transparent;">
+          <span>
+            <strong>{{ course.course_code }}</strong>
+            <span class="ms-2">{{ course.course_title }}</span>
+            {% if requirement %}
+            <span class="badge rounded-pill text-bg-light ms-2">
+              {{ requirement.requirement_type|capitalize }}
+            </span>
+            {% endif %}
+          </span>
+          <span>{{ course.credits }} credits</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="d-flex justify-content-between border-top pt-3 mt-3">
+        <strong>Total credits</strong>
+        <strong class="{% if planning.credit_limit_exceeded %}text-danger{% endif %}">
+          {{ planning.total_credits }}/15 credits
+        </strong>
+      </div>
+      {% if planning.credit_limit_exceeded %}
+      <div class="alert alert-warning mt-3 mb-0" role="alert">
+        The 15-credit semester limit has been exceeded. This may result in
+        rejection by your advisor.
+      </div>
+      {% endif %}
+      {% else %}
+      <p class="mb-0" style="color: var(--brand-muted);">
+        Your semester plan is empty. Return to planning to add courses.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mt-4">
+    <a class="btn btn-outline-secondary"
+       href="{{ url_for('course_planning_view') }}?semester={{ planning.semester|urlencode }}&academic_year={{ planning.academic_year|urlencode }}">
+      Back to planning
+    </a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('course_selection_history_view') }}">View plan history</a>
+    {% if planning.selected_courses and planning.selection_status == "draft" %}
+    <form method="post" action="{{ url_for('submit_course_selection') }}">
+      <input type="hidden" name="semester" value="{{ planning.semester }}">
+      <input type="hidden" name="academic_year" value="{{ planning.academic_year }}">
+      <button class="btn" style="background: var(--brand-accent); color: var(--brand-ink);" type="submit">
+        Submit for advisor approval
+      </button>
+    </form>
+    {% elif planning.selection_status == "submitted" %}
+    <span class="align-self-center" style="color: var(--brand-muted);">
+      Your plan has been submitted and is awaiting advisor review.
+    </span>
+    {% elif planning.selection_status == "approved" %}
+    <span class="align-self-center text-success">Your advisor approved this plan.</span>
+    {% elif planning.selection_status == "rejected" %}
+    <span class="align-self-center text-danger">
+      Your advisor rejected this plan. Return to planning to revise and resubmit it.
+    </span>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

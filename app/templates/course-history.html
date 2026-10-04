@@ -1,0 +1,96 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Plan History{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <div class="mb-4">
+    <p class="text-uppercase small fw-semibold mb-1" style="color: var(--brand-muted);">Review history</p>
+    <h1 class="h3 mb-1">Your semester plan history</h1>
+    <p class="mb-0" style="color: var(--brand-muted);">
+      Review previous drafts and submissions, remove an accidental submission, or start planning another semester.
+    </p>
+  </div>
+
+  {% if history %}
+  <div class="row g-4">
+    {% for item in history %}
+    <div class="col-xl-6">
+      <div class="card shadow-sm h-100"
+           style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+            <div>
+              <h2 class="h5 mb-1">{{ item.selection.semester }}</h2>
+              <p class="mb-0" style="color: var(--brand-muted);">{{ item.selection.academic_year }}</p>
+            </div>
+            {% if item.selection.status == "submitted" %}
+            <span class="badge rounded-pill" style="background: var(--brand-accent-2); color: var(--brand-surface);">
+              Submitted
+            </span>
+            {% else %}
+            {% if item.selection.status == "draft" %}
+            <span class="badge rounded-pill" style="background: var(--brand-accent); color: var(--brand-ink);">Draft</span>
+            {% elif item.selection.status == "approved" %}
+            <span class="badge rounded-pill bg-success">Approved</span>
+            {% elif item.selection.status == "rejected" %}
+            <span class="badge rounded-pill bg-danger">Rejected</span>
+            {% endif %}
+            {% endif %}
+          </div>
+          <div class="d-flex justify-content-between border-top pt-3">
+            <span>{{ item.course_count }} course{{ "" if item.course_count == 1 else "s" }}</span>
+            <strong class="{% if item.credit_limit_exceeded %}text-danger{% endif %}">
+              {{ item.total_credits }}/15 credits
+            </strong>
+          </div>
+          <div class="mt-3">
+            {% for course in item.courses %}
+            <div class="small mb-1">
+              <strong>{{ course.course_code }}</strong> {{ course.course_title }}
+            </div>
+            {% endfor %}
+          </div>
+          {% if item.selection.advisor_comment %}
+          <div class="alert alert-danger mt-3 mb-0">
+            <strong>Advisor comment:</strong> {{ item.selection.advisor_comment }}
+          </div>
+          {% endif %}
+          <a class="btn btn-outline-secondary btn-sm mt-3"
+             href="{{ url_for('review_course_selection') }}?semester={{ item.selection.semester|urlencode }}&academic_year={{ item.selection.academic_year|urlencode }}">
+            View details
+          </a>
+          {% if item.selection.status == "submitted" %}
+          <form class="d-inline" method="post" action="{{ url_for('delete_course_selection') }}"
+                onsubmit="return confirm('Delete this submitted semester plan? This cannot be undone.');">
+            <input type="hidden" name="selection_id" value="{{ item.selection.selection_id }}">
+            <button class="btn btn-outline-danger btn-sm mt-3" type="submit">Delete submission</button>
+          </form>
+          {% elif item.selection.status == "draft" %}
+          <form class="d-inline" method="post" action="{{ url_for('delete_course_selection') }}"
+                onsubmit="return confirm('Delete this draft semester plan?');">
+            <input type="hidden" name="selection_id" value="{{ item.selection.selection_id }}">
+            <button class="btn btn-outline-danger btn-sm mt-3" type="submit">Delete draft</button>
+          </form>
+          {% else %}
+          <form class="d-inline" method="post" action="{{ url_for('delete_course_selection') }}"
+                onsubmit="return confirm('Delete this reviewed semester plan? This cannot be undone.');">
+            <input type="hidden" name="selection_id" value="{{ item.selection.selection_id }}">
+            <button class="btn btn-outline-danger btn-sm mt-3" type="submit">Delete plan</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card shadow-sm" style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+    <div class="card-body">
+      <p class="mb-3" style="color: var(--brand-muted);">You do not have any saved semester plans yet.</p>
+      <a class="btn" style="background: var(--brand-accent); color: var(--brand-ink);"
+         href="{{ url_for('course_planning_view') }}">Start a plan</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

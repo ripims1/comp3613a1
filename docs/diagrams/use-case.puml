@@ -1,0 +1,29 @@
+@startuml
+!pragma layout smetana
+skinparam shadowing false
+skinparam actorBorderColor #1B365D
+skinparam actorFontColor #1E232D
+skinparam usecaseBackgroundColor #FFFFFF
+skinparam usecaseBorderColor #1B365D
+skinparam usecaseFontColor #1E232D
+skinparam rectangleBorderColor #1B365D
+skinparam rectangleBackgroundColor #F8FAFC
+skinparam arrowColor #1B365D
+
+actor "Student" as Student
+
+rectangle "MyAdvisor" {
+  usecase "Check Degree Progress" as Check_Degree_Progress
+  usecase "Plan Course Selection" as Plan_Course_Selection
+  usecase "Submit Course Selection for Approval" as Submit_Course_Selection_for_Approval
+  usecase "Review Course Selection" as Review_Course_Selection
+}
+
+actor "Advisor" as Advisor
+
+Student --> Check_Degree_Progress
+Student --> Plan_Course_Selection
+Student --> Submit_Course_Selection_for_Approval
+Review_Course_Selection <-- Advisor
+
+@enduml

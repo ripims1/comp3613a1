@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block internal_css %}
+<style>
+  body { overflow-x: hidden; background: var(--brand-bg); }
+  #advisor-wrapper { display: flex; min-height: 100vh; align-items: stretch; }
+  #advisor-sidebar {
+    min-width: 250px; max-width: 250px; min-height: 100%;
+    align-self: stretch; background: var(--brand-sidebar); color: #fff;
+  }
+  #advisor-sidebar .nav-link { color: var(--brand-sidebar-text); font-weight: 500; }
+  #advisor-sidebar .nav-link:hover,
+  #advisor-sidebar .nav-link.active {
+    color: #fff; background-color: color-mix(in srgb, var(--brand-accent) 55%, #000);
+    border-radius: 0.5rem;
+  }
+  #advisor-content {
+    width: 100%; padding: 1rem; background: var(--brand-bg);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="advisor-wrapper">
+  <nav id="advisor-sidebar" class="p-3 d-flex flex-column">
+    <div class="text-center mb-4 fs-5">MyAdvisor</div>
+    <ul class="nav nav-pills flex-column gap-2 flex-grow-1">
+      <li class="nav-item">
+        <a class="nav-link d-flex align-items-center {{ 'active' if request.url.path == '/advisor' }}"
+           href="{{ url_for('advisor_home_view') }}">
+          <span class="material-symbols-outlined me-2">fact_check</span>
+          Review submissions
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link d-flex align-items-center {{ 'active' if request.url.path == '/advisor/history' }}"
+           href="{{ url_for('advisor_history_view') }}">
+          <span class="material-symbols-outlined me-2">history</span>
+          Review history
+        </a>
+      </li>
+      <li class="nav-item mt-auto">
+        <a class="nav-link d-flex align-items-center" href="{{ url_for('logout') }}">
+          <span class="material-symbols-outlined me-2">logout</span>
+          Logout
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <main id="advisor-content">
+    <nav class="navbar navbar-expand-lg mb-4 px-3 rounded-3 shadow-sm"
+         style="background-color: var(--brand-surface);">
+      <span class="fw-semibold">Advisor workspace</span>
+      <span class="ms-auto">Welcome, {{ user.username }}</span>
+    </nav>
+    <div class="row">
+      <div class="col-12">
+        {% for message in get_flashed_messages(request) %}
+        <div class="alert alert-{{ message.type }}" role="alert">{{ message.message }}</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% block advisor_content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

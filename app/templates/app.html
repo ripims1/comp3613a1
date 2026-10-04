@@ -1,9 +1,196 @@
 {% extends "authenticated-base.html" %}
 {% block title %}Home{% endblock %}
 
+{% block additional_styles %}
+<style>
+  .required-course-list {
+    max-height: clamp(16rem, 48vh, 34rem);
+    overflow-y: auto;
+    padding-right: 0.25rem;
+  }
+
+  .required-course-list::-webkit-scrollbar {
+    width: 0.45rem;
+  }
+
+  .required-course-list::-webkit-scrollbar-thumb {
+    background: var(--brand-accent-2);
+    border-radius: 999px;
+  }
+
+  .required-course-row {
+    border-bottom: 1px solid var(--brand-accent);
+  }
+
+  .required-course-row.course-completed {
+    background: #e4f3e8;
+  }
+
+  .required-course-row.course-outstanding {
+    background: #fff;
+  }
+
+  .course-status-button {
+    color: #fff;
+    font-weight: 600;
+    border: 0;
+  }
+
+  .course-status-button.mark-completed {
+    background: #237a45;
+  }
+
+  .course-status-button.mark-completed:hover,
+  .course-status-button.mark-completed:focus {
+    background: #185c33;
+    color: #fff;
+  }
+
+  .course-status-button.mark-outstanding {
+    background: #9a6500;
+  }
+
+  .course-status-button.mark-outstanding:hover,
+  .course-status-button.mark-outstanding:focus {
+    background: #754d00;
+    color: #fff;
+  }
+
+  #completed-courses-tab {
+    color: #237a45;
+    font-weight: 600;
+  }
+
+  #completed-courses-tab.active {
+    color: #185c33;
+    border-color: #237a45 #237a45 #fff;
+  }
+</style>
+{% endblock %}
+
 {% block subpage_content %}
 <div class="container-fluid py-2">
-  <h1 class="h4 mb-2">Home</h1>
-  <p class="text-muted mb-0">Workflow screens replace this shell in Phase 5 implement.</p>
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <p class="text-uppercase small fw-semibold mb-1" style="color: var(--brand-muted);">Degree progress</p>
+      <h1 class="h3 mb-1">Welcome back, {{ user.username }}</h1>
+      {% if progress.program %}
+      <p class="mb-0" style="color: var(--brand-muted);">{{ progress.program.program_name }}</p>
+      {% endif %}
+    </div>
+    <span class="badge rounded-pill px-3 py-2" style="background: var(--brand-accent); color: var(--brand-ink);">
+      {{ progress.progress_percent }}% complete
+    </span>
+  </div>
+
+  <div class="card shadow-sm mb-4" style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+    <div class="card-body">
+      <div class="d-flex justify-content-between mb-2">
+        <span class="fw-semibold">Required credit progress</span>
+        <span style="color: var(--brand-muted);">{{ progress.completed_credits }} / {{ progress.required_credits }} credits</span>
+      </div>
+      <div class="progress" role="progressbar" aria-label="Degree progress" aria-valuenow="{{ progress.progress_percent }}" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar" style="width: {{ progress.progress_percent }}%; background: var(--brand-accent-2);"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm" style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+    <div class="card-body">
+      <h2 class="h5 mb-3">Required courses</h2>
+      {% if progress.required_courses %}
+      <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#core-courses" type="button">Core</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#elective-courses" type="button">Electives</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="completed-courses-tab" data-bs-toggle="tab" data-bs-target="#completed-courses" type="button">
+            Completed
+          </button>
+        </li>
+      </ul>
+      <div class="tab-content">
+        {% for course_type in ["core", "elective"] %}
+        <div class="tab-pane fade {% if course_type == 'core' %}show active{% endif %}" id="{{ course_type }}-courses">
+          <div class="list-group list-group-flush required-course-list">
+          {% for course, link, completed in progress.required_courses if link.requirement_type == course_type and not completed %}
+          <div class="list-group-item px-2 py-3 d-flex justify-content-between align-items-center required-course-row course-outstanding">
+            <div>
+              <strong>{{ course.course_code }}</strong>
+              <span class="ms-2">{{ course.course_title }}</span>
+              <span class="badge rounded-pill text-bg-light ms-2">{{ course.credits }} credits · {{ link.requirement_type|capitalize }}</span>
+            </div>
+            <form method="post" action="{{ url_for('update_course_completion') }}">
+              <input type="hidden" name="course_id" value="{{ course.course_id }}">
+              <input type="hidden" name="completed" value="true">
+              <button class="btn btn-sm rounded-pill course-status-button mark-completed" type="submit">
+                Mark completed
+              </button>
+            </form>
+          </div>
+          {% else %}
+          <p class="mb-0 py-3" style="color: var(--brand-muted);">All {{ course_type }} courses are completed.</p>
+          {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        <div class="tab-pane fade" id="completed-courses">
+          <div class="list-group list-group-flush required-course-list">
+          {% for course, link, completed in progress.required_courses if completed %}
+          <div class="list-group-item px-2 py-3 d-flex justify-content-between align-items-center required-course-row course-completed">
+            <div>
+              <strong>{{ course.course_code }}</strong>
+              <span class="ms-2">{{ course.course_title }}</span>
+              <span class="badge rounded-pill text-bg-light ms-2">{{ course.credits }} credits · {{ link.requirement_type|capitalize }}</span>
+            </div>
+            <form method="post" action="{{ url_for('update_course_completion') }}">
+              <input type="hidden" name="course_id" value="{{ course.course_id }}">
+              <input type="hidden" name="completed" value="false">
+              <button class="btn btn-sm rounded-pill course-status-button mark-outstanding" type="submit">
+                Mark outstanding
+              </button>
+            </form>
+          </div>
+          {% else %}
+          <p class="mb-0 py-3" style="color: var(--brand-muted);">No courses have been marked completed yet.</p>
+          {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <p class="mb-0" style="color: var(--brand-muted);">Your program requirements will appear here.</p>
+      {% endif %}
+    </div>
+  </div>
 </div>
+{% endblock %}
+
+{% block subpage_scripts %}
+<script>
+  const requirementTabs = document.querySelectorAll(
+    '[data-bs-toggle="tab"][data-bs-target$="-courses"]'
+  );
+  const savedRequirementTab = localStorage.getItem("myadvisor-requirement-tab");
+
+  requirementTabs.forEach((tab) => {
+    tab.addEventListener("shown.bs.tab", (event) => {
+      localStorage.setItem(
+        "myadvisor-requirement-tab",
+        event.target.getAttribute("data-bs-target")
+      );
+    });
+  });
+
+  if (savedRequirementTab) {
+    const savedTab = document.querySelector(
+      `[data-bs-target="${savedRequirementTab}"]`
+    );
+    if (savedTab) {
+      bootstrap.Tab.getOrCreateInstance(savedTab).show();
+    }
+  }
+</script>
 {% endblock %}

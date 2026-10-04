@@ -1,0 +1,242 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Plan Course Selection{% endblock %}
+
+{% block subpage_content %}
+<style>
+  .planning-column {
+    min-height: 0;
+  }
+
+  .course-list,
+  .semester-plan-list {
+    max-height: clamp(14rem, 42vh, 32rem);
+    overflow-y: auto;
+    padding-right: 0.25rem;
+  }
+
+  .course-list::-webkit-scrollbar,
+  .semester-plan-list::-webkit-scrollbar {
+    width: 0.45rem;
+  }
+
+  .course-list::-webkit-scrollbar-thumb,
+  .semester-plan-list::-webkit-scrollbar-thumb {
+    background: var(--brand-accent-2);
+    border-radius: 999px;
+  }
+</style>
+<div class="container-fluid py-2">
+  <div class="mb-4">
+    <p class="text-uppercase small fw-semibold mb-1" style="color: var(--brand-muted);">Course planning</p>
+    <h1 class="h3 mb-1">Plan your course selection</h1>
+    <p class="mb-0" style="color: var(--brand-muted);">
+      Build a new semester plan, then save it as a draft. Submitted plans are read-only.
+    </p>
+  </div>
+
+  <form method="post" action="{{ url_for('save_course_selection') }}" id="planning-form">
+    <div class="card shadow-sm mb-4" style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label fw-semibold" for="semester">Semester</label>
+            <select class="form-select" id="semester" name="semester">
+              {% for option in ["Semester 1", "Semester 2", "Summer"] %}
+              <option value="{{ option }}" {% if option == planning.semester %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="academic_year">Academic year</label>
+            <select class="form-select" id="academic_year" name="academic_year">
+              {% for start_year in range(2026, 2030) %}
+              {% set year_range = start_year ~ "/" ~ (start_year + 1) %}
+              <option value="{{ year_range }}" {% if year_range == planning.academic_year %}selected{% endif %}>
+                {{ year_range }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <div class="d-grid gap-2">
+              {% if planning.selection_status in ["submitted", "approved"] %}
+              <button class="btn" style="background: var(--brand-accent); color: var(--brand-ink);" type="submit" disabled>
+                {{ planning.selection_status|capitalize }} plan is locked
+              </button>
+              {% else %}
+              <button class="btn" style="background: var(--brand-accent); color: var(--brand-ink);" type="submit">Save draft</button>
+              {% endif %}
+              <a class="btn btn-outline-secondary"
+                 href="{{ url_for('review_course_selection') }}?semester={{ planning.semester|urlencode }}&academic_year={{ planning.academic_year|urlencode }}">
+                Review &amp; submit
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% if planning.selection_status in ["submitted", "approved"] %}
+    <div class="alert alert-info mt-3" role="alert">
+      This plan has already been submitted or approved and is read-only. Choose another semester
+      or academic year above to start a new plan.
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+      <div class="col-lg-7 planning-column">
+        <div class="card shadow-sm h-100" style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h2 class="h5 mb-0">Available courses</h2>
+              <span style="color: var(--brand-muted);">{{ planning.courses|length }} courses</span>
+            </div>
+            <label class="visually-hidden" for="course-search">Search courses</label>
+            <input class="form-control mb-3" id="course-search" type="search"
+                   placeholder="Search by course code or title">
+            <div class="course-list">
+              {% for course in planning.courses %}
+              <div class="course-row rounded-3 p-3 mb-2 d-flex justify-content-between align-items-center"
+                   data-course="{{ course.course_code|lower }} {{ course.course_title|lower }}"
+                   style="border: 1px solid var(--brand-accent); background: var(--brand-bg);">
+                <div>
+                  <strong>{{ course.course_code }}</strong>
+                  <span class="d-block" style="color: var(--brand-muted);">{{ course.course_title }}</span>
+                  <small>{{ course.credits }} credits</small>
+                </div>
+                <button class="course-toggle btn btn-sm rounded-pill"
+                        data-course-id="{{ course.course_id }}"
+                        data-course-code="{{ course.course_code }}"
+                        data-course-title="{{ course.course_title }}"
+                        data-course-credits="{{ course.credits }}"
+                        type="button">
+                  <span class="toggle-label"></span>
+                </button>
+              </div>
+              {% endfor %}
+              <p class="course-empty mb-0 d-none" style="color: var(--brand-muted);">No matching courses.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5 planning-column">
+        <div class="card shadow-sm h-100" style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h2 class="h5 mb-0">My semester plan</h2>
+              <span class="plan-count badge rounded-pill" style="background: var(--brand-accent); color: var(--brand-ink);">0 courses</span>
+            </div>
+            <div class="semester-plan-list"></div>
+            <p class="plan-empty mb-0" style="color: var(--brand-muted);">Add courses from the list to build your plan.</p>
+            <div class="mt-3 pt-3" style="border-top: 1px solid var(--brand-accent);">
+              <strong>Total credits: <span class="plan-credits">0</span>/15</strong>
+              <span class="credit-limit-message d-none ms-2" style="color: var(--brand-accent-2);">
+                Credit limit exceeded
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="selected-course-inputs"></div>
+  </form>
+</div>
+{% endblock %}
+
+{% block subpage_scripts %}
+<script>
+  const selected = new Map();
+  const initialSelected = {{ planning.selected_ids | tojson }};
+  const search = document.getElementById("course-search");
+  const inputContainer = document.getElementById("selected-course-inputs");
+  const planList = document.querySelector(".semester-plan-list");
+  const planEmpty = document.querySelector(".plan-empty");
+  const planCount = document.querySelector(".plan-count");
+  const planCredits = document.querySelector(".plan-credits");
+  const planLocked = {{ "true" if planning.selection_status in ["submitted", "approved"] else "false" }};
+  const semester = document.getElementById("semester");
+  const academicYear = document.getElementById("academic_year");
+
+  function reloadPlan() {
+    const params = new URLSearchParams({
+      semester: semester.value,
+      academic_year: academicYear.value
+    });
+    window.location.href = `${window.location.pathname}?${params}`;
+  }
+
+  semester.addEventListener("change", reloadPlan);
+  academicYear.addEventListener("change", reloadPlan);
+
+  document.querySelectorAll(".course-toggle").forEach((button) => {
+    const course = {
+      id: button.dataset.courseId,
+      code: button.dataset.courseCode,
+      title: button.dataset.courseTitle,
+      credits: Number(button.dataset.courseCredits)
+    };
+    button.addEventListener("click", () => {
+      if (planLocked) return;
+      if (selected.has(course.id)) selected.delete(course.id);
+      else selected.set(course.id, course);
+      render();
+    });
+    if (initialSelected.includes(Number(course.id))) selected.set(course.id, course);
+  });
+
+  search.addEventListener("input", () => {
+    const query = search.value.toLowerCase().trim();
+    let visible = 0;
+    document.querySelectorAll(".course-row").forEach((row) => {
+      const matches = row.dataset.course.includes(query);
+      row.classList.toggle("d-none", !matches);
+      if (matches) visible += 1;
+    });
+    document.querySelector(".course-empty").classList.toggle("d-none", visible !== 0);
+  });
+
+  function render() {
+    inputContainer.innerHTML = "";
+    planList.innerHTML = "";
+    let credits = 0;
+    document.querySelectorAll(".course-toggle").forEach((button) => {
+      const active = selected.has(button.dataset.courseId);
+      button.className = "course-toggle btn btn-sm rounded-pill " + (active ? "btn-outline-secondary" : "btn-primary");
+      button.querySelector(".toggle-label").textContent = active ? "− Remove" : "+ Add";
+    });
+    selected.forEach((course) => {
+      credits += course.credits;
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "course_ids";
+      input.value = course.id;
+      inputContainer.appendChild(input);
+      const item = document.createElement("div");
+      item.className = "rounded-3 p-3 mb-2 d-flex justify-content-between align-items-start gap-2";
+      item.style = "border: 1px solid var(--brand-accent); background: var(--brand-bg);";
+      item.innerHTML = `
+        <span>
+          <strong>${course.code}</strong>
+          <span class="d-block" style="color: var(--brand-muted);">${course.title}</span>
+          <small>${course.credits} credits</small>
+        </span>
+        <button type="button" class="btn btn-sm p-0 plan-remove"
+                aria-label="Remove ${course.code}"
+                title="Remove ${course.code}"
+                style="color: var(--brand-accent-2); font-size: 1.35rem; line-height: 1;">&times;</button>
+      `;
+      item.querySelector(".plan-remove").addEventListener("click", () => {
+        selected.delete(course.id);
+        render();
+      });
+      planList.appendChild(item);
+    });
+    planEmpty.classList.toggle("d-none", selected.size !== 0);
+    planCount.textContent = `${selected.size} course${selected.size === 1 ? "" : "s"}`;
+    planCredits.textContent = credits;
+    planCredits.parentElement.classList.toggle("text-danger", credits > 15);
+    document.querySelector(".credit-limit-message").classList.toggle("d-none", credits <= 15);
+  }
+  render();
+</script>
+{% endblock %}

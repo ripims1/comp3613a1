@@ -1,0 +1,101 @@
+{% extends "advisor-base.html" %}
+{% block title %}Review Semester Plan{% endblock %}
+
+{% block advisor_content %}
+<div class="container-fluid py-2">
+  <div class="mb-4">
+    <p class="text-uppercase small fw-semibold mb-1" style="color: var(--brand-muted);">Advisor workflow</p>
+    <h1 class="h3 mb-1">Review {{ review.student.student_name }}'s plan</h1>
+    <p class="mb-0" style="color: var(--brand-muted);">
+      {{ review.selection.semester }} · {{ review.selection.academic_year }}
+    </p>
+  </div>
+
+  <div class="card shadow-sm mb-4"
+       style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4"><span class="d-block small" style="color: var(--brand-muted);">Student</span><strong>{{ review.student.student_name }}</strong></div>
+        <div class="col-md-4"><span class="d-block small" style="color: var(--brand-muted);">Semester</span><strong>{{ review.selection.semester }}</strong></div>
+        <div class="col-md-4"><span class="d-block small" style="color: var(--brand-muted);">Academic year</span><strong>{{ review.selection.academic_year }}</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm"
+       style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+    <div class="card-body">
+      <h2 class="h5 mb-3">Selected courses</h2>
+      {% for course in review.courses %}
+      <div class="d-flex justify-content-between border-bottom py-2">
+        <span><strong>{{ course.course_code }}</strong> {{ course.course_title }}</span>
+        <span>{{ course.credits }} credits</span>
+      </div>
+      {% endfor %}
+      <div class="d-flex justify-content-between pt-3">
+        <strong>Total credits</strong>
+        <strong class="{% if review.credit_limit_exceeded %}text-danger{% endif %}">
+          {{ review.total_credits }}/15 credits
+        </strong>
+      </div>
+      {% if review.credit_limit_exceeded %}
+      <div class="alert alert-warning mt-3 mb-0">This plan exceeds the 15-credit limit and may require rejection.</div>
+      {% endif %}
+      {% if review.selection.advisor_comment %}
+      <div class="alert alert-danger mt-3 mb-0">
+        <strong>Advisor comment:</strong> {{ review.selection.advisor_comment }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if review.selection.status == "submitted" %}
+  <div class="d-flex flex-wrap gap-2 mt-4">
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('advisor_home_view') }}">Back to submissions</a>
+    <form method="post" action="{{ url_for('advisor_decision', selection_id=review.selection.selection_id) }}">
+      <input type="hidden" name="decision" value="approved">
+      <button class="btn btn-sm" style="background: var(--brand-accent); color: var(--brand-ink);" type="submit">Approve plan</button>
+    </form>
+    <button class="btn btn-outline-danger btn-sm" id="show-rejection" type="button">
+      Reject plan
+    </button>
+  </div>
+  <form class="d-none mt-3" id="rejection-form"
+        method="post" action="{{ url_for('advisor_decision', selection_id=review.selection.selection_id) }}">
+    <input type="hidden" name="decision" value="rejected">
+    <label class="form-label fw-semibold" for="advisor-comment">Comment for the student</label>
+    <textarea class="form-control mb-2" id="advisor-comment" name="advisor_comment"
+              rows="3" placeholder="Explain what should be changed before resubmission."
+              disabled required></textarea>
+    <div class="d-flex gap-2">
+      <button class="btn btn-danger btn-sm" type="submit">Confirm rejection</button>
+      <button class="btn btn-outline-secondary btn-sm" id="cancel-rejection" type="button">Cancel</button>
+    </div>
+  </form>
+  <script>
+    (() => {
+      const showRejection = document.getElementById("show-rejection");
+      const rejectionForm = document.getElementById("rejection-form");
+      const advisorComment = document.getElementById("advisor-comment");
+      const cancelRejection = document.getElementById("cancel-rejection");
+
+      showRejection.addEventListener("click", () => {
+        rejectionForm.classList.remove("d-none");
+        advisorComment.disabled = false;
+        advisorComment.focus();
+        showRejection.classList.add("d-none");
+      });
+
+      cancelRejection.addEventListener("click", () => {
+        rejectionForm.classList.add("d-none");
+        advisorComment.value = "";
+        advisorComment.disabled = true;
+        showRejection.classList.remove("d-none");
+      });
+    })();
+  </script>
+  {% else %}
+  <a class="btn btn-outline-secondary btn-sm mt-4" href="{{ url_for('advisor_home_view') }}">Back to submissions</a>
+  {% endif %}
+</div>
+{% endblock %}

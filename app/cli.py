@@ -87,7 +87,168 @@ def cmd_seed(args: argparse.Namespace) -> None:
             created += 1
 
     print(f"Seed done — created {created}, skipped {skipped}.")
+    _seed_degree_progress_demo()
     print("Login with bob/bobpass or admin/adminpass")
+
+
+def _seed_degree_progress_demo() -> None:
+    from sqlmodel import select
+
+    from app.database import get_cli_session
+    from app.models.degree import (
+        CompletedCourse,
+        Course,
+        Program,
+        ProgramCourse,
+        Student,
+    )
+    from app.models.user import User
+
+    with get_cli_session() as session:
+        bob = session.exec(select(User).where(User.username == "bob")).one_or_none()
+        if bob is None:
+            return
+
+        program = session.exec(
+            select(Program).where(Program.program_name == "BSc Computer Science")
+        ).one_or_none()
+        if program is None:
+            program = Program(
+                program_name="BSc Computer Science",
+                total_credits_required=93,
+            )
+            session.add(program)
+            session.commit()
+            session.refresh(program)
+
+        course_seed = [
+            ("COMP 1600", 3, "Introduction to Computing Concepts"),
+            ("COMP 1601", 3, "Computer Programming I"),
+            ("COMP 1602", 3, "Computer Programming II"),
+            ("COMP 1604", 3, "Mathematics for Computing"),
+            ("COMP 2601", 3, "Computer Architecture"),
+            ("COMP 2602", 3, "Computer Networks"),
+            ("COMP 2603", 3, "Object-Oriented Programming I"),
+            ("COMP 2604", 3, "Operating Systems"),
+            ("COMP 2605", 3, "Enterprise Database Systems"),
+            ("COMP 2606", 3, "Software Engineering I"),
+            ("COMP 2611", 3, "Data Structures"),
+            ("COMP 3601", 3, "Design and Analysis of Algorithms"),
+            ("COMP 3602", 3, "Theory of Computing"),
+            ("COMP 3603", 3, "Human-Computer Interaction"),
+            ("COMP 3605", 3, "Introduction to Data Analytics"),
+            ("COMP 3606", 3, "Wireless and Mobile Computing"),
+            ("COMP 3607", 3, "Object-Oriented Programming II"),
+            ("COMP 3609", 3, "Game Programming"),
+            ("COMP 3610", 3, "Big Data Analytics"),
+            ("COMP 3611", 3, "Modelling and Simulation"),
+            ("COMP 3613", 3, "Software Engineering II"),
+            ("COMP 3991", 3, "Applied Mathematics for Scientific Computing"),
+            ("INFO 2602", 3, "Web Programming and Technologies I"),
+            ("INFO 2604", 3, "Information Systems Security"),
+            ("INFO 2605", 3, "Professional Ethics and Law"),
+            ("INFO 3600", 3, "Business Information Systems"),
+            ("INFO 3604", 3, "Project"),
+            ("INFO 3605", 3, "Fundamentals of LAN Technologies"),
+            ("INFO 3606", 3, "Cloud Computing"),
+            ("INFO 3607", 3, "Fundamentals of WAN Technologies"),
+            ("INFO 3608", 3, "E-Commerce"),
+            ("INFO 3609", 3, "Internship I"),
+            ("INFO 3610", 6, "Internship II"),
+            ("INFO 3611", 3, "Database Administration"),
+            ("INFO 3612", 3, "Cybersecurity Operations & Incident Management"),
+            ("MATH 2250", 3, "Industrial Statistics"),
+        ]
+        course_rows = []
+        for course_code, credits, course_title in course_seed:
+            course = session.exec(
+                select(Course).where(Course.course_code == course_code)
+            ).one_or_none()
+            if course is None:
+                course = Course(
+                    course_code=course_code,
+                    course_title=course_title,
+                    credits=credits,
+                )
+                session.add(course)
+                session.flush()
+            else:
+                course.course_title = course_title
+                course.credits = credits
+            course_rows.append(course)
+
+        session.commit()
+        for course in course_rows:
+            session.refresh(course)
+
+        existing_links = {
+            link.course_id
+            for link in session.exec(
+                select(ProgramCourse).where(
+                    ProgramCourse.program_id == program.program_id
+                )
+            ).all()
+        }
+        core_course_codes = {
+            "COMP 1600", "COMP 1601", "COMP 1602", "COMP 1604",
+            "COMP 2601", "COMP 2602", "COMP 2603", "COMP 2604",
+            "COMP 2605", "COMP 2611",
+        }
+        for course in course_rows:
+            link = session.exec(
+                select(ProgramCourse).where(
+                    ProgramCourse.program_id == program.program_id,
+                    ProgramCourse.course_id == course.course_id,
+                )
+            ).one_or_none()
+            if link is not None:
+                link.requirement_type = (
+                    "core" if course.course_code in core_course_codes else "elective"
+                )
+        session.add_all(
+            [
+                ProgramCourse(
+                    program_id=program.program_id,
+                    course_id=course.course_id,
+                )
+                for course in course_rows
+                if course.course_id not in existing_links
+            ]
+        )
+        session.commit()
+        student = session.exec(
+            select(Student).where(Student.user_id == bob.id)
+        ).one_or_none()
+        if student is None:
+            student = Student(
+                user_id=bob.id,
+                program_id=program.program_id,
+                student_name=bob.username,
+            )
+            session.add(student)
+            session.commit()
+            session.refresh(student)
+
+        completed_course = session.exec(
+            select(Course).where(Course.course_code == "COMP 3613")
+        ).one()
+        if session.exec(
+            select(CompletedCourse).where(
+                CompletedCourse.student_id == student.student_id,
+                CompletedCourse.course_id == completed_course.course_id,
+            )
+        ).one_or_none() is None:
+            session.add(
+                CompletedCourse(
+                    student_id=student.student_id,
+                    course_id=completed_course.course_id,
+                    grade="A",
+                    semester="Semester 1",
+                    academic_year=2026,
+                )
+            )
+            session.commit()
+        print(f"  ensure course catalog demo data ({len(course_rows)} courses)")
 
 
 def cmd_run(args: argparse.Namespace) -> None:

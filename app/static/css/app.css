@@ -1,16 +1,15 @@
 :root {
-  /* Phase 5 theming: Guide overwrites these from docs/report.md preferences */
-  --brand-name: "FastStarter";
-  --brand-bg: #0c1218;
-  --brand-surface: #f7f4ef;
-  --brand-ink: #14202b;
-  --brand-muted: #6a7a88;
-  --brand-accent: #c45c26;
-  --brand-accent-2: #2a6f6b;
-  --brand-sidebar: #14202b;
-  --brand-sidebar-text: #a8b4bf;
-  --brand-font-display: "Fraunces", Georgia, serif;
-  --brand-font-body: "Source Sans 3", "Segoe UI", sans-serif;
+  --brand-name: "MyAdvisor";
+  --brand-bg: #f7f0e3;
+  --brand-surface: #fffaf0;
+  --brand-ink: #3f281c;
+  --brand-muted: #806653;
+  --brand-accent: #c9a27e;
+  --brand-accent-2: #6b422c;
+  --brand-sidebar: #6b422c;
+  --brand-sidebar-text: #fff6e8;
+  --brand-font-display: Calibri, "Segoe UI", sans-serif;
+  --brand-font-body: Calibri, "Segoe UI", sans-serif;
   --brand-radius: 0.85rem;
 }
 
@@ -40,10 +39,10 @@ body {
   grid-template-rows: auto 1fr auto;
   color: var(--brand-surface);
   background:
-    linear-gradient(160deg, rgba(12, 18, 24, 0.55), rgba(12, 18, 24, 0.82)),
-    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(42, 111, 107, 0.45), transparent 55%),
-    radial-gradient(ellipse 70% 50% at 90% 80%, rgba(196, 92, 38, 0.28), transparent 50%),
-    linear-gradient(180deg, #1a2834 0%, #0c1218 100%);
+    linear-gradient(160deg, rgba(107, 66, 44, 0.92), rgba(63, 40, 28, 0.97)),
+    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(201, 162, 126, 0.34), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 80%, rgba(201, 162, 126, 0.22), transparent 50%),
+    linear-gradient(180deg, #6b422c 0%, #3f281c 100%);
   position: relative;
   overflow: hidden;
 }
@@ -57,8 +56,8 @@ body {
       -18deg,
       transparent,
       transparent 48px,
-      rgba(247, 244, 239, 0.025) 48px,
-      rgba(247, 244, 239, 0.025) 49px
+      rgba(255, 255, 255, 0.04) 48px,
+      rgba(255, 255, 255, 0.04) 49px
     );
   pointer-events: none;
 }
@@ -144,7 +143,7 @@ body {
 
 .btn-landing-primary {
   background: var(--brand-accent);
-  color: #fff8f3;
+  color: var(--brand-ink);
 }
 
 .btn-landing-primary:hover {
@@ -179,8 +178,8 @@ body {
   top: 18%;
   background:
     radial-gradient(circle at 35% 35%, rgba(247, 244, 239, 0.18), transparent 55%),
-    radial-gradient(circle at 70% 70%, rgba(42, 111, 107, 0.5), transparent 60%),
-    rgba(196, 92, 38, 0.15);
+    radial-gradient(circle at 70% 70%, rgba(201, 162, 126, 0.5), transparent 60%),
+    rgba(201, 162, 126, 0.15);
   filter: blur(2px);
   animation: landing-drift 14s ease-in-out infinite alternate;
   pointer-events: none;
@@ -270,4 +269,19 @@ body {
 
 .auth-back:hover {
   color: var(--brand-accent);
+}
+
+#sidebar .logout-link {
+  color: #fff;
+}
+
+#sidebar .nav-link:hover,
+#sidebar .nav-link.active {
+  color: var(--brand-ink);
+  background-color: var(--brand-accent);
+}
+
+#sidebar .logout-link:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.16);
 }

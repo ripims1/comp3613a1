@@ -1,0 +1,68 @@
+{% extends "advisor-base.html" %}
+{% block title %}Advisor Review{% endblock %}
+
+{% block advisor_content %}
+<div class="container-fluid py-2">
+  <div class="mb-4">
+    <p class="text-uppercase small fw-semibold mb-1" style="color: var(--brand-muted);">Advisor workflow</p>
+    <h1 class="h3 mb-1">Review course selections</h1>
+    <p class="mb-0" style="color: var(--brand-muted);">
+      Open a submitted semester plan to approve or reject it.
+    </p>
+  </div>
+  <form class="mb-4" method="get" action="{{ url_for('advisor_home_view') }}">
+    <label class="visually-hidden" for="advisor-search">Search submissions</label>
+    <div class="input-group">
+      <input class="form-control" id="advisor-search" name="search" value="{{ search }}"
+             type="search" placeholder="Search by student, semester, year, or course">
+      <button class="btn btn-outline-secondary" type="submit">Search</button>
+    </div>
+  </form>
+
+  {% if reviews %}
+  <div class="row g-4">
+    {% for review in reviews %}
+    <div class="col-xl-6">
+      <div class="card shadow-sm h-100"
+           style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <h2 class="h5 mb-1">{{ review.student.student_name }}</h2>
+              <p class="mb-0" style="color: var(--brand-muted);">
+                {{ review.selection.semester }} · {{ review.selection.academic_year }}
+              </p>
+            </div>
+            <span class="badge rounded-pill" style="background: var(--brand-accent); color: var(--brand-ink);">
+              Submitted
+            </span>
+          </div>
+          <div class="d-flex justify-content-between border-top pt-3">
+            <span>{{ review.course_count }} courses</span>
+            <strong class="{% if review.credit_limit_exceeded %}text-danger{% endif %}">
+              {{ review.total_credits }}/15 credits
+            </strong>
+          </div>
+          {% if review.credit_limit_exceeded %}
+          <div class="alert alert-warning mt-3 mb-0">This plan exceeds the 15-credit limit.</div>
+          {% endif %}
+          <a class="btn btn-outline-secondary btn-sm mt-3"
+             href="{{ url_for('advisor_selection_view', selection_id=review.selection.selection_id) }}">
+            Review plan
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card shadow-sm" style="background: var(--brand-surface); border: 1px solid var(--brand-accent-2);">
+    <div class="card-body">
+      <p class="mb-0" style="color: var(--brand-muted);">
+        {% if search %}No submitted plans match your search.{% else %}There are no submitted plans awaiting review.{% endif %}
+      </p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
