@@ -108,6 +108,13 @@ Seeding skips usernames that already exist. Add more rows in `cmd_seed` in `app/
 python manage.py users
 ```
 
+The MyAdvisor seed also creates the BSc Computer Science program, the 37
+classified courses from `MyAdvisor - Computer Science General Major Courses -
+Classified.txt`, their Core/Elective program links, Bob's student profile, and
+Bob's completed `COMP 3613` record. This gives the demonstration data for
+degree progress, course planning, submission, and advisor review without
+manual catalog setup.
+
 ### 5. Run the project (Python CLI)
 
 ```bash

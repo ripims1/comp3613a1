@@ -269,18 +269,42 @@ details.
 
 The course catalog seed was expanded from the supplied
 `MyAdvisor - Computer Science General Major Courses.txt` list. Re-running
-`python manage.py init --no-drop` now idempotently adds the COMP, INFO, and
-MATH courses, links them to the Computer Science program, and keeps completed
-courses excluded from planning. This provides enough dummy data to exercise
-search, scrolling, selection, and the 15-credit warning.
+`python manage.py init --no-drop` now idempotently adds all 37 COMP, INFO, and
+MATH courses from the classified source list, preserves each Core/Elective
+classification on its `ProgramCourse` link, and keeps completed courses
+excluded from planning. This provides enough seeded data to exercise search,
+scrolling, selection, and the 15-credit warning.
+
+### YouTube demonstration seed data
+
+The deployed demonstration uses:
+
+- `bob / bobpass` — student account with a BSc Computer Science profile.
+- `admin / adminpass` — advisor account and advisor workspace.
+- 37 catalog courses from `MyAdvisor - Computer Science General Major Courses -
+  Classified.txt`, including Core and Elective labels and the 6-credit
+  `INFO 3610` course.
+- Bob's completed `COMP 3613` record with grade `A`, so degree progress shows
+  completed-credit progress and the course is unavailable for a new plan.
+
+Suggested video path: sign in as Bob to show the Core/Electives degree
+progress tabs, search and save a semester draft, review and submit it; then
+sign in as Admin to approve or reject the submitted plan and show the status
+and advisor comment back in Bob's history.
 
 One named workflow at a time. Include verify notes and polish / model revisions (Phase 5). Do not treat the first build as final.
 
 ## Deployed app
 
-Phase 6. Public Render URL (not localhost). Markers open this to mark the three workflows.
+Phase 6 deployment is complete. Render is running the generated Postgres
+database and the `faststarter` Python web service in Oregon, matching the
+resource settings in `render.yaml`. The service is configured with the
+database's internal connection string as `DATABASE_URI`, plus the production
+environment and generated secret settings.
 
-https://
+Status: live
+Public Render URL: https://faststarter-uvxp.onrender.com
+Health check: https://faststarter-uvxp.onrender.com/health returned `{"ok":true}`
 
 ## Logins
 

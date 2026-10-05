@@ -122,45 +122,47 @@ def _seed_degree_progress_demo() -> None:
             session.refresh(program)
 
         course_seed = [
-            ("COMP 1600", 3, "Introduction to Computing Concepts"),
-            ("COMP 1601", 3, "Computer Programming I"),
-            ("COMP 1602", 3, "Computer Programming II"),
-            ("COMP 1604", 3, "Mathematics for Computing"),
-            ("COMP 2601", 3, "Computer Architecture"),
-            ("COMP 2602", 3, "Computer Networks"),
-            ("COMP 2603", 3, "Object-Oriented Programming I"),
-            ("COMP 2604", 3, "Operating Systems"),
-            ("COMP 2605", 3, "Enterprise Database Systems"),
-            ("COMP 2606", 3, "Software Engineering I"),
-            ("COMP 2611", 3, "Data Structures"),
-            ("COMP 3601", 3, "Design and Analysis of Algorithms"),
-            ("COMP 3602", 3, "Theory of Computing"),
-            ("COMP 3603", 3, "Human-Computer Interaction"),
-            ("COMP 3605", 3, "Introduction to Data Analytics"),
-            ("COMP 3606", 3, "Wireless and Mobile Computing"),
-            ("COMP 3607", 3, "Object-Oriented Programming II"),
-            ("COMP 3609", 3, "Game Programming"),
-            ("COMP 3610", 3, "Big Data Analytics"),
-            ("COMP 3611", 3, "Modelling and Simulation"),
-            ("COMP 3613", 3, "Software Engineering II"),
-            ("COMP 3991", 3, "Applied Mathematics for Scientific Computing"),
-            ("INFO 2602", 3, "Web Programming and Technologies I"),
-            ("INFO 2604", 3, "Information Systems Security"),
-            ("INFO 2605", 3, "Professional Ethics and Law"),
-            ("INFO 3600", 3, "Business Information Systems"),
-            ("INFO 3604", 3, "Project"),
-            ("INFO 3605", 3, "Fundamentals of LAN Technologies"),
-            ("INFO 3606", 3, "Cloud Computing"),
-            ("INFO 3607", 3, "Fundamentals of WAN Technologies"),
-            ("INFO 3608", 3, "E-Commerce"),
-            ("INFO 3609", 3, "Internship I"),
-            ("INFO 3610", 6, "Internship II"),
-            ("INFO 3611", 3, "Database Administration"),
-            ("INFO 3612", 3, "Cybersecurity Operations & Incident Management"),
-            ("MATH 2250", 3, "Industrial Statistics"),
+            ("COMP 1600", 3, "Introduction to Computing Concepts", "core"),
+            ("COMP 1601", 3, "Computer Programming I", "core"),
+            ("COMP 1602", 3, "Computer Programming II", "core"),
+            ("COMP 1604", 3, "Mathematics for Computing", "core"),
+            ("COMP 2601", 3, "Computer Architecture", "core"),
+            ("COMP 2602", 3, "Computer Networks", "core"),
+            ("COMP 2603", 3, "Object-Oriented Programming I", "core"),
+            ("COMP 2604", 3, "Operating Systems", "core"),
+            ("COMP 2605", 3, "Enterprise Database Systems", "core"),
+            ("COMP 2606", 3, "Software Engineering I", "elective"),
+            ("COMP 2611", 3, "Data Structures", "core"),
+            ("COMP 3601", 3, "Design and Analysis of Algorithms", "elective"),
+            ("COMP 3602", 3, "Theory of Computing", "elective"),
+            ("COMP 3603", 3, "Human-Computer Interaction", "elective"),
+            ("COMP 3605", 3, "Introduction to Data Analytics", "elective"),
+            ("COMP 3606", 3, "Wireless and Mobile Computing", "elective"),
+            ("COMP 3607", 3, "Object-Oriented Programming II", "elective"),
+            ("COMP 3609", 3, "Game Programming", "elective"),
+            ("COMP 3610", 3, "Big Data Analytics", "elective"),
+            ("COMP 3611", 3, "Modelling and Simulation", "elective"),
+            ("COMP 3613", 3, "Software Engineering II", "elective"),
+            ("COMP 3991", 3, "Applied Mathematics for Scientific Computing", "elective"),
+            ("INFO 2602", 3, "Web Programming and Technologies I", "elective"),
+            ("INFO 2604", 3, "Information Systems Security", "elective"),
+            ("INFO 2605", 3, "Professional Ethics and Law", "elective"),
+            ("INFO 3600", 3, "Business Information Systems", "elective"),
+            ("INFO 3604", 3, "Project", "elective"),
+            ("INFO 3605", 3, "Fundamentals of LAN Technologies", "elective"),
+            ("INFO 3606", 3, "Cloud Computing", "elective"),
+            ("INFO 3607", 3, "Fundamentals of WAN Technologies", "elective"),
+            ("INFO 3608", 3, "E-Commerce", "elective"),
+            ("INFO 3609", 3, "Internship I", "elective"),
+            ("INFO 3610", 6, "Internship II", "elective"),
+            ("INFO 3611", 3, "Database Administration", "elective"),
+            ("INFO 3612", 3, "Cybersecurity Operations & Incident Management", "elective"),
+            ("MATH 2250", 3, "Industrial Statistics", "elective"),
         ]
         course_rows = []
-        for course_code, credits, course_title in course_seed:
+        course_types = {}
+        for course_code, credits, course_title, requirement_type in course_seed:
+            course_types[course_code] = requirement_type
             course = session.exec(
                 select(Course).where(Course.course_code == course_code)
             ).one_or_none()
@@ -189,11 +191,6 @@ def _seed_degree_progress_demo() -> None:
                 )
             ).all()
         }
-        core_course_codes = {
-            "COMP 1600", "COMP 1601", "COMP 1602", "COMP 1604",
-            "COMP 2601", "COMP 2602", "COMP 2603", "COMP 2604",
-            "COMP 2605", "COMP 2611",
-        }
         for course in course_rows:
             link = session.exec(
                 select(ProgramCourse).where(
@@ -202,14 +199,13 @@ def _seed_degree_progress_demo() -> None:
                 )
             ).one_or_none()
             if link is not None:
-                link.requirement_type = (
-                    "core" if course.course_code in core_course_codes else "elective"
-                )
+                link.requirement_type = course_types[course.course_code]
         session.add_all(
             [
                 ProgramCourse(
                     program_id=program.program_id,
                     course_id=course.course_id,
+                    requirement_type=course_types[course.course_code],
                 )
                 for course in course_rows
                 if course.course_id not in existing_links
