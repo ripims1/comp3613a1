@@ -268,8 +268,8 @@ review page displays `Submitted for advisor review` plus the submitted plan
 details.
 
 The course catalog seed was expanded from the supplied
-`MyAdvisor - Computer Science General Major Courses.txt` list. Re-running
-`python manage.py init --no-drop` now idempotently adds all 37 COMP, INFO, and
+`MyAdvisor - Computer Science General Major Courses - Classified.txt` list.
+Re-running `python manage.py init --no-drop` now idempotently adds all 36 COMP, INFO, and
 MATH courses from the classified source list, preserves each Core/Elective
 classification on its `ProgramCourse` link, and keeps completed courses
 excluded from planning. This provides enough seeded data to exercise search,
@@ -281,7 +281,7 @@ The deployed demonstration uses:
 
 - `bob / bobpass` — student account with a BSc Computer Science profile.
 - `admin / adminpass` — advisor account and advisor workspace.
-- 37 catalog courses from `MyAdvisor - Computer Science General Major Courses -
+- 36 catalog courses from `MyAdvisor - Computer Science General Major Courses -
   Classified.txt`, including Core and Elective labels and the 6-credit
   `INFO 3610` course.
 - Bob's completed `COMP 3613` record with grade `A`, so degree progress shows
